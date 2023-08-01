@@ -32,6 +32,17 @@ class TestCell(unittest.TestCase):
         self.cell.reduce(3)
         self.assertNotIn(3, self.cell.options)
 
+    def test_setting_value_reduces_row(self):
+        row = Row()
+        row.append(self.cell)
+        self.cell._patch_missing_structures()
+        for _ in range(3):
+            c = Cell(self.possible_ones)
+            row.append(c)
+            c._patch_missing_structures()
+        self.cell.value = 3
+        self.assertNotIn(3, row.options)
+
 
 class TestCellGroup(unittest.TestCase):
     def setUp(self):

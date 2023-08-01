@@ -6,6 +6,18 @@ class Cell:
         self.options: set = options
         self._value = None
 
+    def _patch_missing_structures(self):
+        if self.row is None:
+            x = Row()
+            x.append(self)
+        if self.column is None:
+            x = Column()
+            x.append(self)
+        if self.square is None:
+            x = Square()
+            x.append(self)
+        return self
+
     @property
     def value(self):
         return self._value
@@ -13,11 +25,16 @@ class Cell:
     @value.setter
     def value(self, new_val):
         self._value = new_val
+        self.row.reduce(new_val)
+        self.column.reduce(new_val)
+        self.square.reduce(new_val)
         self.options = set()
 
     def reduce(self, val):
-        self.options.remove(val)
-
+        try:
+            self.options.remove(val)
+        except KeyError:
+            pass
 
 class CellGroup:
     def __init__(self):
