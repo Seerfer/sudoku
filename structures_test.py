@@ -1,4 +1,7 @@
 import unittest
+from unittest import mock
+
+import structures
 from structures import Cell, CellGroup, Row
 
 
@@ -17,6 +20,9 @@ class TestCell(unittest.TestCase):
 
     def test_cell_knows_actual_value(self):
         self.assertTrue(hasattr(self.cell, "value"))
+        self.cell.row = mock.MagicMock()
+        self.cell.column = mock.MagicMock()
+        self.cell.square = mock.MagicMock()
         self.cell.value = 0
         self.assertEqual(0, self.cell.value)
 
@@ -24,6 +30,9 @@ class TestCell(unittest.TestCase):
         self.assertEqual(self.possible_ones, self.cell.options)
 
     def test_setting_cell_value_clears_possible_ones(self):
+        self.cell.row = mock.MagicMock()
+        self.cell.column = mock.MagicMock()
+        self.cell.square = mock.MagicMock()
         self.cell.value = 3
         self.assertSetEqual(set(), self.cell.options)
 
@@ -32,16 +41,19 @@ class TestCell(unittest.TestCase):
         self.cell.reduce(3)
         self.assertNotIn(3, self.cell.options)
 
+
+class TestCellInContext(unittest.TestCase):
+    def setUp(self):
+        self.possible_ones = {1, 2, 3, 4}
+        self.cell = Cell(self.possible_ones)
+        self.row = mock.Mock()
+        self.cell.row = self.row
+        self.cell.column = mock.Mock()
+        self.cell.square = mock.Mock()
+
     def test_setting_value_reduces_row(self):
-        row = Row()
-        row.append(self.cell)
-        self.cell._patch_missing_structures()
-        for _ in range(3):
-            c = Cell(self.possible_ones)
-            row.append(c)
-            c._patch_missing_structures()
         self.cell.value = 3
-        self.assertNotIn(3, row.options)
+        self.row.reduce.assert_called_with(3)
 
 
 class TestCellGroup(unittest.TestCase):
@@ -64,6 +76,11 @@ class TestCellGroup(unittest.TestCase):
         for cell in cells:
             self.cg.append(cell)
         self.assertSetEqual({1, 2, 3, 4}, self.cg.options)
+
+    def test_appending_cell_adds_it_to_list(self):
+        new_cell = Cell
+        self.cg.append(Cell)
+        self.assertIn(new_cell, self.cg.cells)
 
 
 class TestRow(unittest.TestCase):

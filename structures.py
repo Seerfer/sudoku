@@ -1,46 +1,38 @@
-class Cell:
-    def __init__(self, options):
-        self.row = None
-        self.column = None
-        self.square = None
-        self.options: set = options
-        self._value = None
+from typing import List, Set, Optional
 
-    def _patch_missing_structures(self):
-        if self.row is None:
-            x = Row()
-            x.append(self)
-        if self.column is None:
-            x = Column()
-            x.append(self)
-        if self.square is None:
-            x = Square()
-            x.append(self)
-        return self
+
+class Cell:
+    def __init__(self, options: Set[int]) -> None:
+        self.row: Optional[Row] = None
+        self.column: Optional[Column] = None
+        self.square: Optional[Square] = None
+        self.options: set = options
+        self._value: int | None = None
 
     @property
-    def value(self):
+    def value(self) -> int | None:
         return self._value
 
     @value.setter
-    def value(self, new_val):
+    def value(self, new_val: int) -> None:
         self._value = new_val
         self.row.reduce(new_val)
         self.column.reduce(new_val)
         self.square.reduce(new_val)
         self.options = set()
 
-    def reduce(self, val):
+    def reduce(self, val: int) -> None:
         try:
             self.options.remove(val)
         except KeyError:
             pass
 
-class CellGroup:
-    def __init__(self):
-        self.cells = []
 
-    def reduce(self, val):
+class CellGroup:
+    def __init__(self) -> None:
+        self.cells: List[Cell] = []
+
+    def reduce(self, val) -> None:
         for cell in self.cells:
             cell.reduce(val)
 
@@ -48,7 +40,7 @@ class CellGroup:
         self.cells.append(what)
 
     @property
-    def options(self):
+    def options(self) -> Set[int]:
         return set().union(*(c.options for c in self.cells))
 
 
