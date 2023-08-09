@@ -1,5 +1,7 @@
+from __future__ import annotations
 from typing import List
 from math import sqrt
+from random import choice
 from structures import Cell, Row, Column, Square
 
 
@@ -12,7 +14,7 @@ class Board:
         self.columns: List[Column] = [Column() for _ in range(self.size)]
         self.squares: List[Square] = [Square() for _ in range(self.size)]
         for i in range(self.size**2):
-            cell = Cell(options)
+            cell = Cell(options, i)
             self.cells.append(cell)
             sq_size = int(sqrt(self.size))
             row = i // self.size
@@ -22,3 +24,29 @@ class Board:
             self.columns[col].append(cell)
             self.squares[sq].append(cell)
 
+    @property
+    def unfilled(self) -> set:
+        return {cell for cell in self.cells if len(cell) > 0}
+
+    @property
+    def least_free(self) -> Cell | None:
+        try:
+            min_len = min(map(len, self.unfilled))
+        except ValueError:
+            return None
+        else:
+            return choice([c for c in self.unfilled if len(c) == min_len])
+
+    def fill(self):
+        while self.unfilled:
+            cell = self.least_free
+            cell.choose_value()
+
+    def __str__(self):
+        return '\n'.join(map(str, self.rows))
+
+
+if __name__ == '__main__':
+    board = Board(25)
+    board.fill()
+    print(board)

@@ -2,6 +2,10 @@ import unittest
 import board
 
 
+def choice(x):
+    return x[0]
+
+
 class TestBoard(unittest.TestCase):
     def setUp(self) -> None:
         self.board = board.Board(4)
@@ -17,6 +21,15 @@ class TestBoard(unittest.TestCase):
         self.assertEqual(4, len(self.board.columns))
         self.assertEqual(4, len(self.board.squares))
 
-    def test_board_can_pick_a_cell(self):
-        cell = self.board.pick_cell()
-        self.assertIs(self.board.cells[0], cell)
+    def test_board_knows_unfilled_cells(self):
+        self.assertSetEqual(self.board.unfilled, set(self.board.cells))
+
+    def test_board_knows_cells_with_least_options(self):
+        self.board.cells[1].value = 1
+        self.board.cells[4].value = 2
+        self.board.cells[5].value = 3
+        self.assertIs(self.board.least_free, self.board.cells[0])
+
+    def test_board_fills_with_values(self):
+        self.board.fill()
+        self.assertSetEqual(self.board.unfilled, set())
