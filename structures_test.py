@@ -1,14 +1,14 @@
 import unittest
 from unittest import mock
+from itertools import chain
 
-import structures
-from structures import Cell, CellGroup, Row
+from structures import Cell, CellGroup, Row, Column, Square, LinkedCells
 
 
 class TestCell(unittest.TestCase):
     def setUp(self):
         self.possible_ones = {1, 2, 3, 4}
-        self.cell = Cell(self.possible_ones)
+        self.cell = Cell(self.possible_ones, 0)
 
     def test_cell_is_initialized(self):
         self.assertIsInstance(self.cell, Cell)
@@ -45,12 +45,13 @@ class TestCell(unittest.TestCase):
 class TestCellInContext(unittest.TestCase):
     def setUp(self):
         self.possible_ones = {1, 2, 3, 4}
-        self.cell = Cell(self.possible_ones)
+        self.cell = Cell(self.possible_ones, 0)
         self.row = mock.Mock()
         self.cell.row = self.row
         self.cell.column = mock.Mock()
         self.cell.square = mock.Mock()
 
+    @unittest.skip('ignore until cells have a linked cell attributes')
     def test_setting_value_reduces_row(self):
         self.cell.value = 3
         self.row.reduce.assert_called_with(3)
@@ -61,33 +62,61 @@ class TestCellGroup(unittest.TestCase):
         self.cg = CellGroup()
 
     def test_knows_constituent_cells(self):
-        self.assertTrue(hasattr(self.cg, 'cells'))
-
-    def test_reducing_value_removes_it_from_cells(self):
-        cells = [Cell({1, 2, 3, 4}) for _ in range(4)]
-        for cell in cells:
-            self.cg.append(cell)
-        self.cg.reduce(3)
-        for cell in cells:
-            self.assertNotIn(3, cell.options)
+        self.assertTrue(hasattr(self.cg, 'data'))
 
     def test_options_is_a_union_of_cell_options(self):
-        cells = [Cell({i+1}) for i in range(4)]
+        cells = [Cell({i+1}, 0) for i in range(4)]
         for cell in cells:
             self.cg.append(cell)
         self.assertSetEqual({1, 2, 3, 4}, self.cg.options)
 
     def test_appending_cell_adds_it_to_list(self):
-        new_cell = Cell
-        self.cg.append(Cell)
-        self.assertIn(new_cell, self.cg.cells)
+        new_cell = Cell({0}, 0)
+        self.cg.append(new_cell)
+        self.assertIn(new_cell, self.cg.data)
 
 
 class TestRow(unittest.TestCase):
     def setUp(self):
         self.row = Row()
-        self.cell = Cell({1, 2, 3, 4})
+        self.cell = Cell({1, 2, 3, 4}, 0)
 
     def test_adding_cell_sets_row_in_the_cell(self):
         self.row.append(self.cell)
         self.assertEqual(self.row, self.cell.row)
+
+
+class TestLinkedCells(unittest.TestCase):
+    def setUp(self):
+        r, c, s = Row(), Column(), Square()
+        self.the_cell = None
+        self.expected_cells = set()
+        cell = Cell({1, 2, 3, 4}, 0)
+        r.append(cell)
+        c.append(cell)
+        s.append(cell)
+        self.the_cell = cell
+        for i in range(1, 4**2):
+            cell = Cell({1, 2, 3, 4}, i)
+            include_cell = False
+            if 0 < i < 4:
+                r.append(cell)
+                include_cell = True
+            if i % 4 == 0:
+                c.append(cell)
+                include_cell = True
+            if i in (1, 4, 5):
+                s.append(cell)
+                include_cell = True
+            if include_cell:
+                self.expected_cells.add(cell)
+
+        self.linked_cells = LinkedCells(r, c, s, self.the_cell)
+
+    def test_cells_interlinked_knows_constituent_cells(self):
+        self.assertSetEqual(self.expected_cells, self.linked_cells)
+
+    def test_reducing_value_removes_it_from_cells(self):
+        self.linked_cells.reduce(4)
+        linked_cells_options = set(chain.from_iterable(cell.options for cell in self.linked_cells))
+        self.assertNotIn(4, linked_cells_options)

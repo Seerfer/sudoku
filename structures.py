@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List, Set, Optional
 from random import choice
+from collections import UserList
 
 
 class Cell:
@@ -9,6 +10,7 @@ class Cell:
         self.row: Optional[Row] = None
         self.column: Optional[Column] = None
         self.square: Optional[Square] = None
+        self.linked_cells: Optional[LinkedCells] = None
         self.options: set = set(options)  # need to make a copy of parameter set because that one is mutable
         self._value: int | None = None
 
@@ -19,9 +21,7 @@ class Cell:
     @value.setter
     def value(self, new_val: int) -> None:
         self._value = new_val
-        self.row.reduce(new_val)
-        self.column.reduce(new_val)
-        self.square.reduce(new_val)
+        # TODO: call reduce on linked cells
         self.options = set()
 
     def reduce(self, val: int) -> None:
@@ -42,27 +42,26 @@ class Cell:
     def __repr__(self):
         return str(f'Cell( {self.index} )')
 
-class CellGroup:
-    def __init__(self) -> None:
-        self.cells: List[Cell] = []
 
-    def reduce(self, val) -> None:
-        for cell in self.cells:
-            cell.reduce(val)
+class CellGroup(UserList):
+    def __init__(self) -> None:
+        self.data: List[Cell]
+        super().__init__()
 
     def append(self, what: Cell) -> None:
-        self.cells.append(what)
+        super().append(what)
 
     @property
     def options(self) -> Set[int]:
-        return set().union(*(c.options for c in self.cells))
+        return set().union(*(c.options for c in self))
 
     def __str__(self):
-        max_width_of_number = len(str(len(self.cells)))
-        return ' '.join(str(cell).center(max_width_of_number) for cell in self.cells)
+        max_width_of_number = len(str(len(self.data)))
+        return ' '.join(str(cell).center(max_width_of_number) for cell in self.data)
 
     def __repr__(self):
-        return f"Cells({', '.join(str(c.index) for c in self.cells)})"
+        return f"Cells({', '.join(str(c.index) for c in self.data)})"
+
 
 class Row(CellGroup):
     def append(self, what: Cell) -> None:
@@ -80,3 +79,15 @@ class Square(CellGroup):
     def append(self, what: Cell) -> None:
         super().append(what)
         what.square = self
+
+
+class LinkedCells(set):
+    def __init__(self, r: Row, c: Column, s: Square, cell) -> None:
+        super().__init__()
+        self.update(r, c, s)
+        self.remove(cell)
+
+    def reduce(self, val):
+        for cell in self:
+            cell.reduce(val)
+

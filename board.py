@@ -47,6 +47,10 @@ class Board:
 
 
 if __name__ == '__main__':
-    board = Board(25)
-    board.fill()
-    print(board)
+    for rep in range(200):
+        board = Board(25)
+        board.fill()
+        if '_' not in str(board):
+            print(rep)
+            print(board)
+            break
