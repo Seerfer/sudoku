@@ -46,15 +46,32 @@ class TestCellInContext(unittest.TestCase):
     def setUp(self):
         self.possible_ones = {1, 2, 3, 4}
         self.cell = Cell(self.possible_ones, 0)
-        self.row = mock.Mock()
-        self.cell.row = self.row
-        self.cell.column = mock.Mock()
-        self.cell.square = mock.Mock()
 
-    @unittest.skip('ignore until cells have a linked cell attributes')
-    def test_setting_value_reduces_row(self):
+    def test_cell_knows_linked_cells(self):
+        cell: Cell = Cell(self.possible_ones, 0)
+        expected_cells = set()
+        row = Row()
+        expected_cells.add(row.append(Cell(self.possible_ones, 0)))
+        col = Column()
+        expected_cells.add(col.append(Cell(self.possible_ones, 0)))
+        sq = Square()
+        expected_cells.add(sq.append(Cell(self.possible_ones, 0)))
+        for x in (row, col, sq):
+            x.append(cell)
+        # the cell should now have them added and integrated into linked_cells property
+        # through internal mechanisms
+        self.assertSetEqual(expected_cells, cell.linked_cells)
+
+    def test_setting_value_reduces_linked_cells(self):
+        r, c, s = mock.Mock(), mock.Mock(), mock.Mock()
+        l_c = mock.Mock()
+        self.cell._set_linked_cells = lambda: None
+        self.cell.linked_cells = l_c
+        self.cell.row = r
+        self.cell.column = c
+        self.cell.square = s
         self.cell.value = 3
-        self.row.reduce.assert_called_with(3)
+        l_c.reduce.assert_called_with(3)
 
 
 class TestCellGroup(unittest.TestCase):

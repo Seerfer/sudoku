@@ -7,9 +7,9 @@ from collections import UserList
 class Cell:
     def __init__(self, options: Set[int], index: int) -> None:
         self.index = index
-        self.row: Optional[Row] = None
-        self.column: Optional[Column] = None
-        self.square: Optional[Square] = None
+        self._row: Optional[Row] = None
+        self._column: Optional[Column] = None
+        self._square: Optional[Square] = None
         self.linked_cells: Optional[LinkedCells] = None
         self.options: set = set(options)  # need to make a copy of parameter set because that one is mutable
         self._value: int | None = None
@@ -21,8 +21,42 @@ class Cell:
     @value.setter
     def value(self, new_val: int) -> None:
         self._value = new_val
-        # TODO: call reduce on linked cells
+        if self.linked_cells is None:
+            raise ValueError('linked_cells must be established before setting cell value')
+        self.linked_cells.reduce(new_val)
         self.options = set()
+
+    @property
+    def row(self) -> Row:
+        return self._row
+
+    @row.setter
+    def row(self, r: Row) -> None:
+        self._row = r
+        self._set_linked_cells()
+
+    @property
+    def column(self) -> Column:
+        return self._column
+    
+    @column.setter
+    def column(self, c: Column) -> None:
+        self._column = c
+        self._set_linked_cells()
+
+    @property
+    def square(self) -> Square:
+        return self._square
+
+    @square.setter
+    def square(self, s: Square) -> None:
+        self._square = s
+        self._set_linked_cells()
+        
+    def _set_linked_cells(self) -> None:
+        rcs = (self._row, self._column, self._square)
+        if all(rcs):
+            self.linked_cells = LinkedCells(*rcs, cell=self)
 
     def reduce(self, val: int) -> None:
         try:
@@ -48,8 +82,9 @@ class CellGroup(UserList):
         self.data: List[Cell]
         super().__init__()
 
-    def append(self, what: Cell) -> None:
+    def append(self, what: Cell) -> Cell:
         super().append(what)
+        return what
 
     @property
     def options(self) -> Set[int]:
@@ -64,21 +99,24 @@ class CellGroup(UserList):
 
 
 class Row(CellGroup):
-    def append(self, what: Cell) -> None:
+    def append(self, what: Cell) -> Cell:
         super().append(what)
         what.row = self
+        return what
 
 
 class Column(CellGroup):
-    def append(self, what: Cell) -> None:
+    def append(self, what: Cell) -> Cell:
         super().append(what)
         what.column = self
+        return what
 
 
 class Square(CellGroup):
-    def append(self, what: Cell) -> None:
+    def append(self, what: Cell) -> Cell:
         super().append(what)
         what.square = self
+        return what
 
 
 class LinkedCells(set):
@@ -90,4 +128,3 @@ class LinkedCells(set):
     def reduce(self, val):
         for cell in self:
             cell.reduce(val)
-
