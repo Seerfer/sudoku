@@ -50,12 +50,14 @@ if __name__ == '__main__':
     from time import monotonic as clock
     t0 = clock()
     for rep in range(200):
-        board = Board(10**2)
-        board.fill()
-        t1 = clock()
-        if '_' not in str(board):
-            break
+        board = Board(4)
+        try:
+            board.fill()
+            t1 = clock()
+            print(board)
+        except ValueError as e:
+            t1 = clock()
+            print(e)
         else:
-            print(f'try {rep} failed. Operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')
-    print(board)
+            break
     print(f'operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')

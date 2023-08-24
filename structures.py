@@ -14,6 +14,7 @@ class Cell:
         self.options: set = set(options)  # need to make a copy of parameter set because that one is mutable
         self._len = len(options)
         self._value: int | None = None
+        self.placeholder = '_'
 
     @property
     def value(self) -> int | None:
@@ -61,6 +62,9 @@ class Cell:
 
     def reduce(self, val: int) -> None:
         self.options.discard(val)
+        if self.value is not None and (self.options) == 0:
+            self.placeholder = 'X'
+            raise ValueError(f'Cell {self.index} cannot discard option {val} last element! {self.options}')
 
     def choose_value(self):
         self.value = choice(tuple(self.options))
@@ -69,7 +73,7 @@ class Cell:
         return len(self.options)
 
     def __str__(self):
-        return str(self.value or '_')
+        return str(self.value or self.placeholder)
 
     def __repr__(self):
         return str(f'Cell( {self.index} )')
