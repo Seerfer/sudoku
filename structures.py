@@ -12,6 +12,7 @@ class Cell:
         self._square: Optional[Square] = None
         self.linked_cells: Optional[LinkedCells] = None
         self.options: set = set(options)  # need to make a copy of parameter set because that one is mutable
+        self._len = len(options)
         self._value: int | None = None
 
     @property
@@ -59,10 +60,7 @@ class Cell:
             self.linked_cells = LinkedCells(*rcs, cell=self)
 
     def reduce(self, val: int) -> None:
-        try:
-            self.options.remove(val)
-        except KeyError:
-            pass
+        self.options.discard(val)
 
     def choose_value(self):
         self.value = choice(tuple(self.options))
