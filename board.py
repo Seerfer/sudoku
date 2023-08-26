@@ -23,6 +23,8 @@ class Board:
             self.rows[row].append(cell)
             self.columns[col].append(cell)
             self.squares[sq].append(cell)
+        for cell in self.cells:
+            cell.set_linked_cells()
 
     @property
     def unfilled(self) -> set:
@@ -54,10 +56,9 @@ if __name__ == '__main__':
         try:
             board.fill()
             t1 = clock()
-            print(board)
         except ValueError as e:
             t1 = clock()
+            print(board)
             print(e)
-        else:
             break
     print(f'operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')

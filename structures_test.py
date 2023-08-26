@@ -18,11 +18,15 @@ class TestCell(unittest.TestCase):
         self.assertTrue(hasattr(self.cell, "column"))
         self.assertTrue(hasattr(self.cell, "square"))
 
+    def test_cell_knows_linked_Cells(self):
+        self.assertTrue(hasattr(self.cell, 'linked_cells'))
+
     def test_cell_knows_actual_value(self):
         self.assertTrue(hasattr(self.cell, "value"))
         self.cell.row = mock.MagicMock()
         self.cell.column = mock.MagicMock()
         self.cell.square = mock.MagicMock()
+        self.cell.linked_cells = mock.MagicMock()
         self.cell.value = 0
         self.assertEqual(0, self.cell.value)
 
@@ -33,6 +37,7 @@ class TestCell(unittest.TestCase):
         self.cell.row = mock.MagicMock()
         self.cell.column = mock.MagicMock()
         self.cell.square = mock.MagicMock()
+        self.cell.linked_cells = mock.MagicMock()
         self.cell.value = 3
         self.assertSetEqual(set(), self.cell.options)
 
@@ -58,8 +63,7 @@ class TestCellInContext(unittest.TestCase):
         expected_cells.add(sq.append(Cell(self.possible_ones, 0)))
         for x in (row, col, sq):
             x.append(cell)
-        # the cell should now have them added and integrated into linked_cells property
-        # through internal mechanisms
+        cell.set_linked_cells()
         self.assertSetEqual(expected_cells, cell.linked_cells)
 
     def test_setting_value_reduces_linked_cells(self):

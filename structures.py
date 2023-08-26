@@ -7,9 +7,9 @@ from collections import UserList
 class Cell:
     def __init__(self, options: Set[int], index: int) -> None:
         self.index = index
-        self._row: Optional[Row] = None
-        self._column: Optional[Column] = None
-        self._square: Optional[Square] = None
+        self.row: Optional[Row] = None
+        self.column: Optional[Column] = None
+        self.square: Optional[Square] = None
         self.linked_cells: Optional[LinkedCells] = None
         self.options: set = set(options)  # need to make a copy of parameter set because that one is mutable
         self._len = len(options)
@@ -27,42 +27,15 @@ class Cell:
             raise ValueError('linked_cells must be established before setting cell value')
         self.linked_cells.reduce(new_val)
         self.options = set()
-
-    @property
-    def row(self) -> Row:
-        return self._row
-
-    @row.setter
-    def row(self, r: Row) -> None:
-        self._row = r
-        self._set_linked_cells()
-
-    @property
-    def column(self) -> Column:
-        return self._column
-    
-    @column.setter
-    def column(self, c: Column) -> None:
-        self._column = c
-        self._set_linked_cells()
-
-    @property
-    def square(self) -> Square:
-        return self._square
-
-    @square.setter
-    def square(self, s: Square) -> None:
-        self._square = s
-        self._set_linked_cells()
         
-    def _set_linked_cells(self) -> None:
-        rcs = (self._row, self._column, self._square)
+    def set_linked_cells(self) -> None:
+        rcs = (self.row, self.column, self.square)
         if all(rcs):
             self.linked_cells = LinkedCells(*rcs, cell=self)
 
     def reduce(self, val: int) -> None:
         self.options.discard(val)
-        if self.value is not None and (self.options) == 0:
+        if self.value is None and self.options == set():
             self.placeholder = 'X'
             raise ValueError(f'Cell {self.index} cannot discard option {val} last element! {self.options}')
 
