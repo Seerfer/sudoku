@@ -1,5 +1,7 @@
 import unittest
+from unittest import mock
 import board
+from copy import copy
 
 
 def choice(x):
@@ -30,6 +32,21 @@ class TestBoard(unittest.TestCase):
         self.board.cells[5].value = 3
         self.assertIs(self.board.least_free, self.board.cells[0])
 
+    def test_board_can_fill_one_cell(self):
+        # count unfilled cells and see if their number decreases
+        before = len(self.board.unfilled)
+        self.board.fill_one()
+        after = len(self.board.unfilled)
+        self.assertEqual(before - 1, after)
+
     def test_board_fills_with_values(self):
         self.board.fill()
         self.assertSetEqual(self.board.unfilled, set())
+
+    def test_board_can_undo_fill(self):
+        mock_cell = mock.Mock()
+        self.board._least_free = lambda: mock_cell
+        self.board.fill_one()
+        self.board.undo_one()
+        mock_cell.undo.assert_called()
+

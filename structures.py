@@ -2,6 +2,21 @@ from __future__ import annotations
 from typing import List, Set, Optional
 from random import choice
 from collections import UserList
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class StepType(Enum):
+    SET_VALUE = 'set value'
+    REDUCE = 'reduce'
+    NOTHING = 'nothing'
+
+
+@dataclass
+class Step:
+    action: StepType
+    value: None = None  # value for undo will always be None
+    options: set = field(default_factory=set)
 
 
 class Cell:
@@ -15,6 +30,7 @@ class Cell:
         self._len = len(options)
         self._value: int | None = None
         self.placeholder = '_'
+        self.history: List[Step] = []
 
     @property
     def value(self) -> int | None:
@@ -22,6 +38,12 @@ class Cell:
 
     @value.setter
     def value(self, new_val: int) -> None:
+        self.history.append(
+            Step(
+                action=StepType.SET_VALUE,
+                options=self.options
+            )
+        )
         self._value = new_val
         if self.linked_cells is None:
             raise ValueError('linked_cells must be established before setting cell value')
@@ -34,13 +56,37 @@ class Cell:
             self.linked_cells = LinkedCells(*rcs, cell=self)
 
     def reduce(self, val: int) -> None:
-        self.options.discard(val)
-        if self.value is None and self.options == set():
-            self.placeholder = 'X'
-            raise ValueError(f'Cell {self.index} cannot discard option {val} last element! {self.options}')
+        if self.value is None:
+            self.history.append(
+                Step(
+                    action=StepType.REDUCE,
+                    options=self.options
+                )
+            )
+            self.options.discard(val)
+            if self.options == set():
+                self.placeholder = 'X'
+                raise ValueError(f'Cell {self.index} cannot discard option {val} last element! {self.options}')
+        else:
+            self.history.append(
+                Step(
+                    action=StepType.NOTHING,
+                )
+            )
 
     def choose_value(self):
         self.value = choice(tuple(self.options))
+
+    def undo(self) -> Step:
+        self.placeholder = '_'
+        last_step: Step = self.history.pop()
+        if last_step.action is not StepType.NOTHING:
+            self._value = last_step.value
+            self.options = last_step.options
+            if last_step.action is StepType.SET_VALUE:
+                self.linked_cells.undo()
+                self.placeholder = 'X'
+        return last_step
 
     def __len__(self):
         return len(self.options)
@@ -103,3 +149,7 @@ class LinkedCells(set):
     def reduce(self, val):
         for cell in self:
             cell.reduce(val)
+
+    def undo(self):
+        for cell in self:
+            cell.undo()

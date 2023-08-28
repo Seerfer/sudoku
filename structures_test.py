@@ -1,6 +1,7 @@
 import unittest
 from unittest import mock
 from itertools import chain
+from copy import copy
 
 from structures import Cell, CellGroup, Row, Column, Square, LinkedCells
 
@@ -77,6 +78,24 @@ class TestCellInContext(unittest.TestCase):
         self.cell.value = 3
         l_c.reduce.assert_called_with(3)
 
+    def test_cell_can_undo_choosing_value(self):
+        expected_cells = set()
+        row = Row()
+        expected_cells.add(row.append(Cell(self.possible_ones, 0)))
+        col = Column()
+        expected_cells.add(col.append(Cell(self.possible_ones, 0)))
+        sq = Square()
+        expected_cells.add(sq.append(Cell(self.possible_ones, 0)))
+        for x in (row, col, sq):
+            x.append(self.cell)
+        self.cell.set_linked_cells()
+
+        options_before = copy(self.cell.options)
+        self.cell.value = 9
+        self.cell.undo()
+        self.assertIsNone(self.cell.value)
+        self.assertSetEqual(self.cell.options, options_before)
+
 
 class TestCellGroup(unittest.TestCase):
     def setUp(self):
@@ -141,3 +160,11 @@ class TestLinkedCells(unittest.TestCase):
         self.linked_cells.reduce(4)
         linked_cells_options = set(chain.from_iterable(cell.options for cell in self.linked_cells))
         self.assertNotIn(4, linked_cells_options)
+
+    def test_linked_cells_can_undo(self):
+        self.linked_cells.clear()
+        mocks = {mock.Mock() for _ in range(4)}
+        self.linked_cells.update(mocks)
+        self.linked_cells.undo()
+        for mck in mocks:
+            mck.undo.assert_called()
