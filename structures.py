@@ -45,6 +45,7 @@ class Cell:
             )
         )
         self._value = new_val
+        print(f'Setting Cell {self.index} value to {new_val}.')
         if self.linked_cells is None:
             raise ValueError('linked_cells must be established before setting cell value')
         self.linked_cells.reduce(new_val)
@@ -60,18 +61,16 @@ class Cell:
             self.history.append(
                 Step(
                     action=StepType.REDUCE,
-                    options=self.options
+                    options=set(self.options)
                 )
             )
             self.options.discard(val)
             if self.options == set():
                 self.placeholder = 'X'
-                raise ValueError(f'Cell {self.index} cannot discard option {val} last element! {self.options}')
+                raise ValueError(f'Cell {self.index} cannot discard option {val}. Last element!')
         else:
             self.history.append(
-                Step(
-                    action=StepType.NOTHING,
-                )
+                Step(action=StepType.NOTHING)
             )
 
     def choose_value(self):
@@ -81,11 +80,16 @@ class Cell:
         self.placeholder = '_'
         last_step: Step = self.history.pop()
         if last_step.action is not StepType.NOTHING:
+            saved_value = self._value
+            saved_options = self.options
             self._value = last_step.value
             self.options = last_step.options
             if last_step.action is StepType.SET_VALUE:
                 self.linked_cells.undo()
                 self.placeholder = 'X'
+                print(f'Undo in {self!r:<8}. Value rollback from {saved_value}, opts {self.options}')
+            else:
+                print(f'Undo in {self!r:<8}. Rollback reduce from {saved_options} to {self.options}')
         return last_step
 
     def __len__(self):
@@ -95,7 +99,7 @@ class Cell:
         return str(self.value or self.placeholder)
 
     def __repr__(self):
-        return str(f'Cell( {self.index} )')
+        return str(f'Cell({self.index})')
 
 
 class CellGroup(UserList):
@@ -147,8 +151,15 @@ class LinkedCells(set):
         self.remove(cell)
 
     def reduce(self, val):
+        err = None
         for cell in self:
-            cell.reduce(val)
+            try:
+                cell.reduce(val)
+            except ValueError as e:
+                # ignore error to allow all cells reduce values
+                err = e
+        if err is not None:
+            raise err
 
     def undo(self):
         for cell in self:

@@ -35,6 +35,10 @@ class Board:
     def least_free(self) -> Cell | None:
         return self._least_free()
 
+    @property
+    def filled_cells(self):
+        return self.size ** 2 - [cell.value for cell in self.cells].count(None)
+
     def _least_free(self) -> Cell | None:
         try:
             min_len = min(map(len, self.unfilled))
@@ -66,16 +70,17 @@ if __name__ == '__main__':
     t0 = clock()
     for rep in range(200):
         board = Board(4)
+        print("New Board")
         try:
             board.fill()
             t1 = clock()
         except ValueError as e:
             print(e)
             t1 = clock()
-            while True:
+            while board.filled_cells:
                 print(board)
                 x = board.undo_one()
                 print(x.options)
-                print('=' * board.size)
+                print('=' * (board.size * 2))
             break
     print(f'operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')
