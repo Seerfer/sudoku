@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List
 from math import sqrt
 from random import choice
-from structures import Cell, Row, Column, Square
+from structures import Cell, Row, Column, Square, OutOfOptions
 
 
 class Board:
@@ -26,6 +26,7 @@ class Board:
             self.squares[sq].append(cell)
         for cell in self.cells:
             cell.set_linked_cells()
+        self.last_cell = self.cells[0]
 
     @property
     def unfilled(self) -> set:
@@ -50,7 +51,9 @@ class Board:
     def fill_one(self):
         cell = self.least_free
         self.history.append(cell)
-        cell.choose_value()
+        c = cell.choose_value()
+        # print(self, '=' * self.size ** 2, sep = '\n')
+        return c
 
     def undo_one(self):
         last_set_cell = self.history.pop()
@@ -59,7 +62,13 @@ class Board:
 
     def fill(self):
         while self.unfilled:
-            self.fill_one()
+            try:
+                self.fill_one()
+            except OutOfOptions:
+                raise
+                # undone_cell = self.undo_one()
+                # while len(undone_cell) <= 1:
+                #     undone_cell = self.undo_one()
 
     def __str__(self):
         return '\n'.join(map(str, self.rows))
@@ -67,20 +76,18 @@ class Board:
 
 if __name__ == '__main__':
     from time import monotonic as clock
-    t0 = clock()
-    for rep in range(200):
-        board = Board(4)
-        print("New Board")
+    t1 = t0 = clock()
+    rep: int = 0
+    for rep in range(2000):
+        board = Board(25)
+        # print("New Board")
         try:
             board.fill()
-            t1 = clock()
-        except ValueError as e:
-            print(e)
-            t1 = clock()
-            while board.filled_cells:
-                print(board)
-                x = board.undo_one()
-                print(x.options)
-                print('=' * (board.size * 2))
+        except OutOfOptions:
+            continue
+        else:
+            print(board)
+            # print('=' * (board.size * 2))
             break
-    print(f'operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')
+    t1 = clock()
+    print(f'Operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')

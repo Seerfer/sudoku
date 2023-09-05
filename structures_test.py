@@ -96,7 +96,6 @@ class TestCellInContext(unittest.TestCase):
         self.assertIsNone(self.cell.value)
         self.assertSetEqual(self.cell.options, options_before)
 
-
 class TestCellGroup(unittest.TestCase):
     def setUp(self):
         self.cg = CellGroup()

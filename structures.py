@@ -45,7 +45,7 @@ class Cell:
             )
         )
         self._value = new_val
-        print(f'Setting Cell {self.index} value to {new_val}.')
+        # print(f'Setting Cell {self.index} value to {new_val}.')
         if self.linked_cells is None:
             raise ValueError('linked_cells must be established before setting cell value')
         self.linked_cells.reduce(new_val)
@@ -67,16 +67,18 @@ class Cell:
             self.options.discard(val)
             if self.options == set():
                 self.placeholder = 'X'
-                raise ValueError(f'Cell {self.index} cannot discard option {val}. Last element!')
+                raise OutOfOptions(f'Cell {self.index} cannot discard option {val}. Last element!')
         else:
             self.history.append(
                 Step(action=StepType.NOTHING)
             )
 
     def choose_value(self):
+        options = self.options
         self.value = choice(tuple(self.options))
+        return options
 
-    def undo(self) -> Step:
+    def undo(self, reinstate_value=False) -> Step:
         self.placeholder = '_'
         last_step: Step = self.history.pop()
         if last_step.action is not StepType.NOTHING:
@@ -85,9 +87,11 @@ class Cell:
             self._value = last_step.value
             self.options = last_step.options
             if last_step.action is StepType.SET_VALUE:
-                self.linked_cells.undo()
+                if not reinstate_value:
+                    self.options = last_step.options - {saved_value}
                 self.placeholder = 'X'
                 print(f'Undo in {self!r:<8}. Value rollback from {saved_value}, opts {self.options}')
+                self.linked_cells.undo()
             else:
                 print(f'Undo in {self!r:<8}. Rollback reduce from {saved_options} to {self.options}')
         return last_step
@@ -164,3 +168,7 @@ class LinkedCells(set):
     def undo(self):
         for cell in self:
             cell.undo()
+
+
+class OutOfOptions(Exception):
+    pass
