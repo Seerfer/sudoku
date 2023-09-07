@@ -6,6 +6,7 @@ from random import choice
 from structures import Cell, Row, Column, Square, OutOfOptions
 from turtle import Turtle, Screen
 
+
 def x_print(*args, **kwargs):
     pass
     # print(*args, **kwargs)
@@ -24,14 +25,14 @@ class Board:
 
         self.draw_board()
 
-        options = set(range(1, self.size+1))
+        options = set(range(1, self.size + 1))
         self.cells: List[Cell] = []
         self.rows: List[Row] = [Row() for _ in range(self.size)]
         self.columns: List[Column] = [Column() for _ in range(self.size)]
         self.squares: List[Square] = [Square() for _ in range(self.size)]
         self.history: List[Cell] = []
-        for i in range(self.size**2):
-            pos = self.cell_index_to_pos(i, 1000, self.size)
+        for i in range(self.size ** 2):
+            pos = self.cell_index_to_pos(i, self.screen.window_width(), self.size)
             cell = Cell(options, i, pos)
             self.cells.append(cell)
             sq_size = int(sqrt(self.size))
@@ -45,24 +46,23 @@ class Board:
             cell.set_linked_cells()
         self.last_cell = self.cells[0]
 
-
-    def get_pos(self, x,y):
+    def get_pos(self, x, y):
         square_size = self.screen.window_width() // self.size
         x_zero_start = x + self.screen.window_width() // 2
         y_zero_start = y + self.screen.window_width() // 2
         x_i = x_zero_start // square_size
         y_i = abs(y_zero_start // square_size - 8)
 
-        print(self.cells[int(y_i + x_i*self.size)].options)
+        print(self.cells[int(y_i + x_i * self.size)].options)
+
     @staticmethod
-    def cell_index_to_pos(index: int, screen_size: int, board_size:int) -> tuple:
+    def cell_index_to_pos(index: int, screen_size: int, board_size: int) -> tuple:
         square_size = screen_size // board_size
 
-        x_pos = index // board_size * square_size + square_size//2
-        y_pos = index % board_size * square_size + square_size//2
+        x_pos = index // board_size * square_size + square_size // 2
+        y_pos = index % board_size * square_size + square_size // 2
 
         return x_pos - screen_size // 2, y_pos - screen_size // 2
-
 
     def setup_screen(self, size: int):
         screen = Screen()
@@ -70,7 +70,6 @@ class Board:
         screen.bgcolor("white")
         screen.title("Sudoku")
         return screen
-
 
     def setup_turtle(self):
         turtle = Turtle()
@@ -101,11 +100,12 @@ class Board:
         screen_y_upper_border = self.screen.window_height() // 2
         screen_y_down_border = -1 * screen_y_upper_border
 
-        n = screen_y_upper_border-square_height
+        n = screen_y_upper_border - square_height
         c = 0
+        l = 0
         bold = False
-        while n > screen_y_down_border:
-            if c == 2:
+        while self.size > l:
+            if c == int(sqrt(self.size)) - 1:
                 bold = True
                 c = 0
             else:
@@ -113,12 +113,15 @@ class Board:
             self.draw_line(self.turtle, (screen_x_left_border, n), (screen_x_right_border, n), bold)
             n = n - square_height
             bold = False
+            l += 1
+
 
         c = 0
         n = screen_x_right_border - square_width
         bold = False
-        while n > screen_x_left_border:
-            if c == 2:
+        l = 0
+        while self.size > l:
+            if c == int(sqrt(self.size)) - 1:
                 bold = True
                 c = 0
             else:
@@ -126,7 +129,7 @@ class Board:
             self.draw_line(self.turtle, (n, screen_y_upper_border), (n, screen_y_down_border), bold)
             n = n - square_height
             bold = False
-
+            l += 1
 
 
     @property
@@ -174,9 +177,9 @@ class Board:
 
     def validate(self):
         return \
-            all(x.validate() for x in self.rows) and\
-            all(x.validate() for x in self.columns) and\
-            all(x.validate() for x in self.squares)
+                all(x.validate() for x in self.rows) and \
+                all(x.validate() for x in self.columns) and \
+                all(x.validate() for x in self.squares)
 
     def __str__(self):
         return '\n'.join(map(str, self.rows))
@@ -188,28 +191,26 @@ if __name__ == '__main__':
         board.fill()
         print(f'the board is {board.validate()}')
         board.screen.resetscreen()
-        # from sys import argv
-        # from time import monotonic as clock
+    # from sys import argv
+    # from time import monotonic as clock
 
-
-        # side = int(argv[1]) if len(argv) == 2 else 3
-        # t0 = clock()
-        # rep: int = 0
-        # for rep in range(20_000):
-        #     board = Board(side**2)
-        #     print(f"New Board {rep}")
-        #     try:
-        #         board.fill()
-        #     except IndexError:
-        #         continue
-        #     else:
-        #         if not board.validate():
-        #             print('invalid.')
-        #             continue
-        #         print(board)
-        #         print('=' * (board.size * 2))
-        #         validity = 'valid' if board.validate() else 'NOT valid'
-        #         print(f'the board is {validity}')
-        #         break
-        # t1 = clock()
-        # print(f'Operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')
+    # side = int(argv[1]) if len(argv) == 2 else 3
+    # t0 = clock()
+    # rep: int = 0
+    # for rep in range(20_000):
+    #     board = Board(side**2)
+    #     print(f"New Board {rep}")
+    #     try:
+    #         board.fill()
+    #     except IndexError:
+    #         continue
+    #     else:
+    #         if not board.validate():
+    #             print('invalid.')
+    #             continue
+    #         print(board)
+    #         print('=' * (board.size * 2))
+    #         validity = 'valid' if board.validate() else 'NOT valid'
+    #         print(f'the board is {validity}')
+    #         break    # t1 = clock()
+    # print(f'Operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')
