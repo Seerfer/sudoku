@@ -17,7 +17,7 @@ class Board:
 
         self.screen = self.setup_screen(1000)
         self.screen.listen()
-        self.screen.tracer(1)
+        self.screen.tracer(0)
         self.screen.onclick(self.get_pos)
 
         self.turtle = self.setup_turtle()
