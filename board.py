@@ -5,6 +5,11 @@ from random import choice
 from structures import Cell, Row, Column, Square, OutOfOptions
 
 
+def x_print(*args, **kwargs):
+    pass
+    # print(*args, **kwargs)
+
+
 class Board:
     def __init__(self, size: int) -> None:
         self.size: int = size
@@ -48,11 +53,11 @@ class Board:
         else:
             return choice([c for c in self.unfilled if len(c) == min_len])
 
-    def fill_one(self):
-        cell = self.least_free
+    def fill_one(self, fixed_cell=None):
+        cell = fixed_cell or self.least_free
         self.history.append(cell)
         c = cell.choose_value()
-        # print(self, '=' * self.size ** 2, sep = '\n')
+        x_print(self, '=' * self.size ** 2, sep='\n')
         return c
 
     def undo_one(self):
@@ -61,33 +66,47 @@ class Board:
         return last_set_cell
 
     def fill(self):
+        undone_cell = None
         while self.unfilled:
             try:
-                self.fill_one()
+                self.fill_one(undone_cell)
             except OutOfOptions:
-                raise
-                # undone_cell = self.undo_one()
-                # while len(undone_cell) <= 1:
-                #     undone_cell = self.undo_one()
+                x_print(*[c.index for c in self.history][::-1])
+                undone_cell = self.undo_one()
+                while len(undone_cell) <= 1:
+                    undone_cell = self.undo_one()
+
+    def validate(self):
+        return \
+            all(x.validate() for x in self.rows) and\
+            all(x.validate() for x in self.columns) and\
+            all(x.validate() for x in self.squares)
 
     def __str__(self):
         return '\n'.join(map(str, self.rows))
 
 
 if __name__ == '__main__':
+    from sys import argv
     from time import monotonic as clock
-    t1 = t0 = clock()
+    side = int(argv[1]) if len(argv) == 2 else 3
+    t0 = clock()
     rep: int = 0
-    for rep in range(2000):
-        board = Board(25)
-        # print("New Board")
+    for rep in range(20_000):
+        board = Board(side**2)
+        print(f"New Board {rep}")
         try:
             board.fill()
-        except OutOfOptions:
+        except IndexError:
             continue
         else:
+            if not board.validate():
+                print('invalid.')
+                continue
             print(board)
-            # print('=' * (board.size * 2))
+            print('=' * (board.size * 2))
+            validity = 'valid' if board.validate() else 'NOT valid'
+            print(f'the board is {validity}')
             break
     t1 = clock()
     print(f'Operation took {t1-t0:.2f} seconds over {rep+1} boards, {(t1-t0)/(rep+1):.3f} seconds on average')

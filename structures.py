@@ -1,9 +1,15 @@
 from __future__ import annotations
 from typing import List, Set, Optional
 from random import choice
-from collections import UserList
+from collections import UserList, Counter
+from itertools import chain
 from dataclasses import dataclass, field
 from enum import Enum
+
+
+def x_print(*args, **kwargs):
+    pass
+    # print(*args, **kwargs)
 
 
 class StepType(Enum):
@@ -25,6 +31,7 @@ class Cell:
         self.row: Optional[Row] = None
         self.column: Optional[Column] = None
         self.square: Optional[Square] = None
+        self.rcs: tuple = (self.row, self.column, self.square)
         self.linked_cells: Optional[LinkedCells] = None
         self.options: set = set(options)  # need to make a copy of parameter set because that one is mutable
         self._len = len(options)
@@ -45,16 +52,19 @@ class Cell:
             )
         )
         self._value = new_val
-        # print(f'Setting Cell {self.index} value to {new_val}.')
+        x_print(f'Setting Cell {self.index} value to {new_val}.')
         if self.linked_cells is None:
             raise ValueError('linked_cells must be established before setting cell value')
         self.linked_cells.reduce(new_val)
         self.options = set()
-        
+
+    def get_options_from(self, what: CellGroup):
+        return what.get_remaining_options(self)
+
     def set_linked_cells(self) -> None:
-        rcs = (self.row, self.column, self.square)
-        if all(rcs):
-            self.linked_cells = LinkedCells(*rcs, cell=self)
+        self.rcs = (self.row, self.column, self.square)
+        if all(self.rcs):
+            self.linked_cells = LinkedCells(*self.rcs, cell=self)
 
     def reduce(self, val: int) -> None:
         if self.value is None:
@@ -73,12 +83,18 @@ class Cell:
                 Step(action=StepType.NOTHING)
             )
 
-    def choose_value(self):
-        options = self.options
-        self.value = choice(tuple(self.options))
-        return options
+    def choose_value(self) -> int:
+        for cg in self.rcs:
+            other_opts = self.get_options_from(cg)
+            remaining_options = self.options - other_opts
+            if len(remaining_options) == 1:
+                self.value = remaining_options.pop()
+                break
+        else:
+            self.value = choice(tuple(self.options))
+        return self.value
 
-    def undo(self, reinstate_value=False) -> Step:
+    def undo(self) -> Step:
         self.placeholder = '_'
         last_step: Step = self.history.pop()
         if last_step.action is not StepType.NOTHING:
@@ -87,13 +103,12 @@ class Cell:
             self._value = last_step.value
             self.options = last_step.options
             if last_step.action is StepType.SET_VALUE:
-                if not reinstate_value:
-                    self.options = last_step.options - {saved_value}
+                self.options = last_step.options - {saved_value}
                 self.placeholder = 'X'
-                print(f'Undo in {self!r:<8}. Value rollback from {saved_value}, opts {self.options}')
+                x_print(f'Undo in {self!r:<8}. Value rollback from {saved_value}, opts {self.options}')
                 self.linked_cells.undo()
             else:
-                print(f'Undo in {self!r:<8}. Rollback reduce from {saved_options} to {self.options}')
+                x_print(f'Undo in {self!r:<8}. Rollback reduce from {saved_options} to {self.options}')
         return last_step
 
     def __len__(self):
@@ -115,9 +130,17 @@ class CellGroup(UserList):
         super().append(what)
         return what
 
+    def get_remaining_options(self, requestor: Cell):
+        return set(chain(*(c.options for c in self if c is not requestor)))
+
     @property
     def options(self) -> Set[int]:
         return set().union(*(c.options for c in self))
+
+    def validate(self):
+        cnt: Counter = Counter([cell.value for cell in self])
+        valid = len(cnt) == len(self) and max(cnt.values()) == 1
+        return valid
 
     def __str__(self):
         max_width_of_number = len(str(len(self.data)))

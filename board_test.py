@@ -1,7 +1,6 @@
 import unittest
 from unittest import mock
 import board
-from copy import copy
 
 
 def choice(x):
@@ -49,4 +48,3 @@ class TestBoard(unittest.TestCase):
         self.board.fill_one()
         self.board.undo_one()
         mock_cell.undo.assert_called()
-
