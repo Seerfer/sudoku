@@ -17,7 +17,8 @@ class Board:
 
         self.screen = self.setup_screen(1000)
         self.screen.listen()
-        self.screen.tracer(2)
+        self.screen.tracer(1)
+        self.screen.onclick(self.get_pos)
 
         self.turtle = self.setup_turtle()
 
@@ -44,14 +45,21 @@ class Board:
             cell.set_linked_cells()
         self.last_cell = self.cells[0]
 
+
+    def get_pos(self, x,y):
+        square_size = self.screen.window_width() // self.size
+        x_zero_start = x + self.screen.window_width() // 2
+        y_zero_start = y + self.screen.window_width() // 2
+        x_i = x_zero_start // square_size
+        y_i = abs(y_zero_start // square_size - 8)
+
+        print(self.cells[int(y_i + x_i*self.size)].options)
     @staticmethod
     def cell_index_to_pos(index: int, screen_size: int, board_size:int) -> tuple:
-        x_board = index // board_size
-        y_board = index % board_size
         square_size = screen_size // board_size
 
-        x_pos = x_board*square_size + square_size//2
-        y_pos = y_board*square_size + square_size//2
+        x_pos = index // board_size * square_size + square_size//2
+        y_pos = index % board_size * square_size + square_size//2
 
         return x_pos - screen_size // 2, y_pos - screen_size // 2
 
@@ -77,9 +85,11 @@ class Board:
         t.pendown()
         if is_bold:
             t.pensize(5)
+            t.color("red")
         t.goto(*end)
         t.penup()
         t.pensize(1)
+        t.color("black")
 
     def draw_board(self):
         square_width = self.screen.window_width() // self.size
@@ -90,6 +100,7 @@ class Board:
 
         screen_y_upper_border = self.screen.window_height() // 2
         screen_y_down_border = -1 * screen_y_upper_border
+
         n = screen_y_upper_border-square_height
         c = 0
         bold = False
@@ -172,10 +183,11 @@ class Board:
 
 
 if __name__ == '__main__':
-    board = Board(9)
-    board.fill()
     while True:
-        pass
+        board = Board(9)
+        board.fill()
+        print(f'the board is {board.validate()}')
+        board.screen.resetscreen()
         # from sys import argv
         # from time import monotonic as clock
 
