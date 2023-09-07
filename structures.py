@@ -5,6 +5,7 @@ from collections import UserList, Counter
 from itertools import chain
 from dataclasses import dataclass, field
 from enum import Enum
+from turtle import Turtle
 
 
 def x_print(*args, **kwargs):
@@ -26,8 +27,9 @@ class Step:
 
 
 class Cell:
-    def __init__(self, options: Set[int], index: int) -> None:
+    def __init__(self, options: Set[int], index: int, pos: tuple) -> None:
         self.index = index
+        self.turtle = self.setup_turtle(pos)
         self.row: Optional[Row] = None
         self.column: Optional[Column] = None
         self.square: Optional[Square] = None
@@ -38,6 +40,7 @@ class Cell:
         self._value: int | None = None
         self.placeholder = '_'
         self.history: List[Step] = []
+
 
     @property
     def value(self) -> int | None:
@@ -57,6 +60,25 @@ class Cell:
             raise ValueError('linked_cells must be established before setting cell value')
         self.linked_cells.reduce(new_val)
         self.options = set()
+        self.turtle_draw_num(new_val)
+
+
+    def setup_turtle(self, position: tuple):
+        turtle = Turtle()
+        turtle.penup()
+        turtle.speed(0)
+        turtle.goto(position)
+        turtle.hideturtle()
+        return turtle
+
+    def turtle_draw_num(self, num: int):
+        self.turtle_clear()
+        self.turtle.write(num, align="center", font="20")
+
+
+    def turtle_clear(self):
+        self.turtle.clear()
+
 
     def get_options_from(self, what: CellGroup):
         return what.get_remaining_options(self)
