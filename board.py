@@ -19,7 +19,7 @@ class Board:
         self.screen = self.setup_screen(1000)
         self.screen.listen()
         self.screen.tracer(0)
-        self.screen.onclick(self.get_pos)
+        self.screen.onclick(self.get_cell_options_from_pos)
 
         self.turtle = self.setup_turtle()
 
@@ -46,7 +46,7 @@ class Board:
             cell.set_linked_cells()
         self.last_cell = self.cells[0]
 
-    def get_pos(self, x, y):
+    def get_cell_options_from_pos(self, x, y):
         square_size = self.screen.window_width() // self.size
         x_zero_start = x + self.screen.window_width() // 2
         y_zero_start = y + self.screen.window_width() // 2
